@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+data/
+workspace/.venv/
+workspace/.pytest_cache/
+workspace/.ruff_cache/

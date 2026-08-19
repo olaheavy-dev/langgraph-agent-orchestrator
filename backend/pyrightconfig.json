@@ -1,0 +1,6 @@
+{
+  "include": ["app", "tests"],
+  "exclude": ["**/__pycache__", "workspace"],
+  "typeCheckingMode": "standard",
+  "reportMissingImports": "error"
+}

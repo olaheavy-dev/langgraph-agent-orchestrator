@@ -1,0 +1,42 @@
+# One command to run both halves: docker compose up --build
+#
+# The backend needs an OpenAI key. Put it in backend/.env (see .env.example);
+# compose reads that file rather than requiring it in your shell.
+
+services:
+  api:
+    build: ./backend
+    env_file: ./backend/.env
+    ports:
+      - "8000:8000"
+    environment:
+      # The browser talks to the API directly, so the origin it calls from has
+      # to be allowed.
+      ORCHESTRATOR_CORS_ORIGINS: '["http://localhost:3000"]'
+      ORCHESTRATOR_CHECKPOINT_PATH: /srv/data/checkpoints.sqlite
+    volumes:
+      # Checkpoints outlive the container: a change awaiting approval when the
+      # API restarts is still awaiting approval afterwards.
+      - orchestrator-data:/srv/data
+    healthcheck:
+      test: ["CMD-SHELL", "/srv/.venv/bin/python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')\""]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        # Inlined into the client bundle at build time, so it must be the URL a
+        # browser can reach -- not the compose service name.
+        NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  orchestrator-data:

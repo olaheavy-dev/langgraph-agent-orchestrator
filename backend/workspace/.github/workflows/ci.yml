@@ -1,0 +1,54 @@
+# TaskVault's pipeline. Every job here blocks merge; see ci.md for what each one
+# is protecting and runbook.md for what to do when one goes red.
+#
+# Note for readers of the orchestrator repo: this file is a fixture. GitHub only
+# runs workflows from the repository root, so nothing here executes on push --
+# it is here to be read by the coding agent and by anyone judging whether a
+# proposed change would survive review.
+
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --extra dev
+      - run: uv run pytest -q
+
+  # Guards the rule from the 2026-03-14 incident: an ADR may not be contradicted
+  # silently. If a PR changes a limit or a storage call, it must also touch the
+  # decision record that explains it.
+  adr-drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require an ADR update alongside architectural changes
+        run: |
+          changed=$(git diff --name-only origin/${{ github.base_ref || 'main' }}...HEAD)
+          touches_arch=$(echo "$changed" | grep -E 'src/taskvault/(rate_limit|storage|auth)\.py' || true)
+          touches_adr=$(echo "$changed" | grep -E 'docs/adr-' || true)
+          if [ -n "$touches_arch" ] && [ -z "$touches_adr" ]; then
+            echo "::error::Architectural code changed with no ADR update. See contributing.md."
+            exit 1
+          fi

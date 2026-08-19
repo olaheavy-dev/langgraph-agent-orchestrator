@@ -1,0 +1,236 @@
+/* Tokens are named for role, never for value: a theme swap has to change one
+   block, not every component that mentioned a grey. */
+
+:root {
+  color-scheme: light;
+
+  --surface: #fcfcfd;
+  --surface-subtle: #f3f3f6;
+  --surface-raised: #ffffff;
+
+  --text: #17171c;         /* 15.9:1 on --surface */
+  --text-muted: #56565f;   /*  7.3:1 */
+  --text-faint: #71717b;   /*  5.0:1 -- the token most likely to fail, measured */
+
+  --border-subtle: #e4e4e8;
+  --border-strong: #c9c9d0;
+  --border-interactive: #a5a5ae;
+
+  /* Amber, because the state this interface exists to show is "held, waiting
+     for you". It is the accent and the pending status at once, which is honest:
+     they are the same idea here. */
+  --accent: #b45309;       /* 5.9:1 on --surface-raised */
+  --accent-hover: #92400e;
+  --accent-tint: #fdf2e3;
+  --accent-contrast: #ffffff;
+
+  --positive: #15803d;
+  --negative: #b91c1c;
+
+  --diff-add-bg: #eaf6ec;
+  --diff-add-text: #14532d;
+  --diff-del-bg: #fdecec;
+  --diff-del-text: #7f1d1d;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, 'JetBrains Mono', Menlo, monospace;
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+
+    --surface: #101014;
+    --surface-subtle: #17171c;
+    --surface-raised: #1d1d23;
+
+    --text: #ededf0;         /* 15.4:1 on --surface */
+    --text-muted: #a1a1ac;   /*  8.0:1 */
+    --text-faint: #83838e;   /*  5.2:1 */
+
+    --border-subtle: #2a2a32;
+    --border-strong: #3d3d47;
+    --border-interactive: #5a5a66;
+
+    --accent: #f5a524;       /* 9.7:1 on --surface */
+    --accent-hover: #fbbf24;
+    --accent-tint: #2a1f0e;
+    --accent-contrast: #17120a;
+
+    --positive: #4ade80;
+    --negative: #f87171;
+
+    --diff-add-bg: #12271a;
+    --diff-add-text: #86efac;
+    --diff-del-bg: #2b1414;
+    --diff-del-text: #fca5a5;
+  }
+}
+
+/* Repeated so an explicit choice beats the system preference in both directions. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --surface: #101014;
+  --surface-subtle: #17171c;
+  --surface-raised: #1d1d23;
+
+  --text: #ededf0;
+  --text-muted: #a1a1ac;
+  --text-faint: #83838e;
+
+  --border-subtle: #2a2a32;
+  --border-strong: #3d3d47;
+  --border-interactive: #5a5a66;
+
+  --accent: #f5a524;
+  --accent-hover: #fbbf24;
+  --accent-tint: #2a1f0e;
+  --accent-contrast: #17120a;
+
+  --positive: #4ade80;
+  --negative: #f87171;
+
+  --diff-add-bg: #12271a;
+  --diff-add-text: #86efac;
+  --diff-del-bg: #2b1414;
+  --diff-del-text: #fca5a5;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--text);
+  /* Mono is the body face, not the accent one. Almost everything this interface
+     shows is an artifact of a machine; prose is the exception. */
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Prose opts back in, and is the only place the UI face appears. */
+.prose {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 68ch;
+}
+
+button { font: inherit; color: inherit; }
+
+:where(a, button, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+::selection { background: var(--accent-tint); color: var(--text); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Interactive states live in CSS, not in inline styles: :hover and :active
+   cannot be expressed inline, and a button that declares a transition but
+   changes nothing on hover feels broken in a way that is hard to name. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-primary { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn-primary:active:not(:disabled) { transform: translateY(0.5px); }
+
+.btn-secondary { background: var(--surface-raised); color: var(--text); border-color: var(--border-strong); }
+.btn-secondary:hover:not(:disabled) { border-color: var(--border-interactive); background: var(--surface-subtle); }
+
+.btn-quiet { background: transparent; color: var(--text-muted); }
+.btn-quiet:hover:not(:disabled) { color: var(--text); background: var(--surface-subtle); }
+
+/* The suggested openings on an empty screen. Dashed, so they read as prompts to
+   act rather than as results already on the page. */
+.example {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: border-color 120ms ease, color 120ms ease, background-color 120ms ease;
+}
+
+.example:hover {
+  border-color: var(--accent);
+  border-style: solid;
+  color: var(--text);
+  background: var(--accent-tint);
+}
+
+.field {
+  width: 100%;
+  min-width: 0;
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font: inherit;
+  transition: border-color 120ms ease;
+}
+
+.field:hover:not(:disabled) { border-color: var(--border-interactive); }
+.field:disabled { color: var(--text-faint); cursor: not-allowed; }
+.field::placeholder { color: var(--text-faint); }
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  height: 28px;
+  width: 28px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  transition: border-color 120ms ease, color 120ms ease;
+}
+
+.icon-button:hover { border-color: var(--border-interactive); color: var(--text); }
+
+/* Entrance for genuinely new content only, keyed so it fires on change rather
+   than on every render. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.enters { animation: rise 140ms ease-out both; }
