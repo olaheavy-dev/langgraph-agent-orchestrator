@@ -1,0 +1,61 @@
+# Three independent suites: the orchestrator, the sandbox it edits, and the web
+# client. They run in parallel because none of them depends on another's output.
+
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --extra dev
+      - run: uv run ruff check app tests
+      - run: uv run ruff format --check app tests
+      - run: uv run pyright
+      # No API key: the suite substitutes a scripted model and deterministic
+      # embeddings, so routing, the approval gate and the sandbox guards are all
+      # checked without reaching a provider.
+      - run: uv run pytest -q
+
+  workspace:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend/workspace
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - run: uv sync --extra dev
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npx tsc --noEmit
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:8000

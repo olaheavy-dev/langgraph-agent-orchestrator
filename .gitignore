@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# workspace sandbox
+backend/workspace/.venv/
+backend/workspace/.pytest_cache/
+backend/workspace/.ruff_cache/
